@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: argo-api
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        value: 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
+      - key: PYTHONPATH
+        value: /app
+    healthCheckPath: /healthz
