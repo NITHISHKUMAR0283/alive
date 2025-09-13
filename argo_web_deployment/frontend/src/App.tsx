@@ -88,11 +88,13 @@ function App() {
   };
 
   const handleQuery = async (query: string, page: number = 1) => {
+    console.log('Handling query:', query, 'page:', page);
     setLoading(true);
     setError(null);
     setLastQuery(query);
     
     try {
+      console.log('Making request to:', `${API_BASE_URL}/api/query?page=${page}&page_size=100`);
       const response = await fetch(`${API_BASE_URL}/api/query?page=${page}&page_size=100`, {
         method: 'POST',
         headers: {
@@ -101,11 +103,13 @@ function App() {
         body: JSON.stringify({ query }),
       });
 
+      console.log('Response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Query result:', result);
       setQueryResult(result);
     } catch (err) {
       console.error('Query failed:', err);

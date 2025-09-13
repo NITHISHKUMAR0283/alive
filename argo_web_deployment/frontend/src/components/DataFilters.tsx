@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -60,14 +60,14 @@ const DataFilters: React.FC<Props> = ({ onFiltersChange, availableData }) => {
   const defaultNetworks = ['ARGO', 'CORE-ARGO'];
   const defaultDateRange = { min: '2000-01-01', max: '2024-12-31' };
 
-  const safeAvailableData = availableData || {
+  const safeAvailableData = useMemo(() => availableData || {
     parameters: defaultParameters,
     qualityLevels: defaultQualityLevels,
     networks: defaultNetworks,
     dateRange: defaultDateRange,
     depthRange: defaultDepthRange,
     geoRange: defaultGeoRange
-  };
+  }, [availableData, defaultParameters, defaultQualityLevels, defaultNetworks, defaultDateRange, defaultDepthRange, defaultGeoRange]);
 
   const [filters, setFilters] = useState<FilterOptions>({
     timeRange: {
@@ -87,9 +87,15 @@ const DataFilters: React.FC<Props> = ({ onFiltersChange, availableData }) => {
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const onFiltersChangeRef = useRef(onFiltersChange);
 
+  // Update the ref whenever onFiltersChange changes
   useEffect(() => {
-    // Count active filters
+    onFiltersChangeRef.current = onFiltersChange;
+  }, [onFiltersChange]);
+
+  // Calculate active filters count
+  useEffect(() => {
     let count = 0;
     if (filters.timeRange.startDate || filters.timeRange.endDate) count++;
     if (filters.geographicalArea.latRange[0] !== safeAvailableData.geoRange.latMin || 
@@ -103,17 +109,21 @@ const DataFilters: React.FC<Props> = ({ onFiltersChange, availableData }) => {
     if (filters.networkType.length > 0) count++;
     
     setActiveFiltersCount(count);
-    
-    // Only call onFiltersChange after initialization and if there are active filters
-    if (isInitialized && count > 0) {
-      onFiltersChange(filters);
+  }, [filters, safeAvailableData]);
+
+  // Call onFiltersChange when filters change, but only after initialization
+  useEffect(() => {
+    if (isInitialized) {
+      onFiltersChangeRef.current(filters);
     }
-    
-    // Mark as initialized after first render
+  }, [filters, isInitialized]);
+
+  // Mark as initialized after first render
+  useEffect(() => {
     if (!isInitialized) {
       setIsInitialized(true);
     }
-  }, [filters, onFiltersChange, safeAvailableData, isInitialized]);
+  }, [isInitialized]);
 
   const handleTimeRangeChange = (field: 'startDate' | 'endDate', value: string) => {
     setFilters(prev => ({
