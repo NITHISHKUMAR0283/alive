@@ -3,9 +3,16 @@ __pycache__/
 *.pyc
 *.pyo
 
-# ChromaDB collections (keep structure but ignore specific collection data)
-working_enhanced_chroma_db/*/
-!working_enhanced_chroma_db/.gitkeep
+# Environment variables (local only)
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Virtual environment
+venv/
+env/
+ENV/
 
 # Large data files (users should download separately)
 *.db
@@ -27,3 +34,10 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Node modules (if any)
+node_modules/
+
+# Logs
+logs/
+*.log
