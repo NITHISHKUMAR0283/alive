@@ -2,7 +2,7 @@
   "collection_info": {
     "name": "optimized_argo_queries",
     "description": "Schema-optimized ARGO queries for maximum semantic similarity",
-    "total_documents": 389,
+    "total_documents": 404,
     "optimization_features": [
       "Real schema column integration",
       "Multiple query variations",
@@ -10,8 +10,13 @@
       "Table relationship awareness",
       "Quality control integration"
     ],
-    "last_updated": "2025-09-13T00:11:41.537170",
-    "dynamic_queries_added": 5
+    "last_updated": "2025-09-13T08:49:27.260881",
+    "dynamic_queries_added": 15,
+    "semantic_enhancement": true,
+    "enhanced_queries": 5,
+    "geographic_queries_added": 5,
+    "total_dynamic_queries": 20,
+    "sql_fixes_applied": 3
   },
   "schema_info": {
     "floats": {
@@ -5732,7 +5737,7 @@
     },
     {
       "id": "temp_avg_dynamic_001",
-      "content": "Temperature Average Analysis Query\nIntent: Calculate comprehensive temperature statistics across all ARGO profiles\n\nSQL Query: SELECT \n    COUNT(m.temperature) as total_measurements,\n    COUNT(DISTINCT p.profile_id) as profiles_with_temperature,\n    COUNT(DISTINCT p.float_id) as floats_contributing,\n    AVG(m.temperature) as average_temperature_celsius,\n    MIN(m.temperature) as coldest_temperature,\n    MAX(m.temperature) as warmest_temperature,\n    STDDEV(m.temperature) as temperature_std_deviation,\n    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY m.temperature) as temp_25th_percentile,\n    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY m.temperature) as temp_median,\n    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY m.temperature) as temp_75th_percentile,\n    AVG(m.pressure) as avg_measurement_depth_dbar,\n    MIN(p.profile_date) as earliest_measurement_date,\n    MAX(p.profile_date) as latest_measurement_date\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.temperature IS NOT NULL \nAND m.temperature_qc = 1\n\nQuery Variations:\n- What is the average temperature across all profiles?\n- average temperature all profiles\n- mean temperature across profiles\n- overall temperature average\n- global temperature mean\n- temperature statistics",
+      "content": "Temperature Average Analysis Query\nIntent: Calculate comprehensive temperature statistics across all ARGO profiles\n\nSQL Query: SELECT \n    COUNT(m.temperature) as total_measurements,\n    COUNT(DISTINCT p.profile_id) as profiles_with_temperature,\n    COUNT(DISTINCT p.float_id) as floats_contributing,\n    AVG(m.temperature) as average_temperature_celsius,\n    MIN(m.temperature) as coldest_temperature,\n    MAX(m.temperature) as warmest_temperature,\n    STDDEV(m.temperature) as temperature_std_deviation,\n    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY m.temperature) as temp_25th_percentile,\n    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY m.temperature) as temp_median,\n    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY m.temperature) as temp_75th_percentile,\n    AVG(m.pressure) as avg_measurement_depth_dbar,\n    MIN(p.profile_date) as earliest_measurement_date,\n    MAX(p.profile_date) as latest_measurement_date\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.temperature IS NOT NULL \nAND m.temperature_qc = 1\n\nQuery Variations:\n- What is the typical ocean temperature?\n- Show me thermal characteristics of seawater\n- Ocean thermal statistics please\n- How warm is the ocean on average?\n- Tell me about ocean temperature patterns\n- What's the mean ocean thermal state?\n- Ocean temperature overview needed\n- Thermal analysis of ocean water\n- Average ocean thermal conditions\n- Ocean temperature statistical summary\n- CTD temperature measurements analysis\n- ARGO float thermal data statistics\n- Oceanographic temperature dataset summary\n- Seawater thermal properties analysis\n- Marine temperature measurement statistics\n",
       "metadata": {
         "type": "temperature_statistics",
         "category": "global_ocean_analysis",
@@ -5797,10 +5802,231 @@
         "semantic_richness": "maximum",
         "creation_date": "2025-09-13T00:11:41.537144"
       }
+    },
+    {
+      "id": "salinity_avg_dynamic_006",
+      "content": "Salinity Average Analysis Query\nIntent: Calculate comprehensive salinity statistics across all ARGO profiles\n\nSQL Query: SELECT \n    COUNT(m.salinity) as total_salinity_measurements,\n    COUNT(DISTINCT p.profile_id) as profiles_with_salinity,\n    COUNT(DISTINCT p.float_id) as floats_contributing,\n    AVG(m.salinity) as average_salinity_psu,\n    MIN(m.salinity) as lowest_salinity,\n    MAX(m.salinity) as highest_salinity,\n    STDDEV(m.salinity) as salinity_std_deviation,\n    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY m.salinity) as salinity_25th_percentile,\n    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY m.salinity) as salinity_median,\n    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY m.salinity) as salinity_75th_percentile,\n    AVG(m.pressure) as avg_measurement_depth_dbar\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nWHERE m.salinity IS NOT NULL \nAND m.salinity_qc = 1\n\nQuery Variations:\n- How salty is the ocean?\n- What's the ocean salinity like?\n- Tell me about ocean salt content\n- Ocean salinity characteristics please\n- Show me seawater salt levels\n- What is typical ocean salinity?\n- Ocean salt concentration analysis\n- How much salt in seawater?\n- Salinity patterns in the ocean\n- Ocean salt statistical overview\n- PSU salinity measurements\n- Haline characteristics analysis\n- CTD salinity data statistics\n- Ocean conductivity analysis\n- Marine salinity dataset summary\n",
+      "metadata": {
+        "type": "salinity_statistics",
+        "category": "global_ocean_analysis",
+        "complexity": "medium",
+        "analysis_level": "comprehensive_statistics",
+        "parameter": "salinity",
+        "data_quality": "highest_qc_only",
+        "created_from": "oceanographic_understanding",
+        "creation_date": "2025-09-13T07:47:21.857531"
+      }
+    },
+    {
+      "id": "salinity_depth_dynamic_007",
+      "content": "Salinity Depth Distribution Analysis\nIntent: Analyze salinity distribution across different ocean depth zones\n\nSQL Query: SELECT \n    CASE \n        WHEN m.pressure <= 50 THEN 'Surface (0-50 dbar)'\n        WHEN m.pressure <= 200 THEN 'Upper Ocean (50-200 dbar)'\n        WHEN m.pressure <= 500 THEN 'Intermediate (200-500 dbar)'\n        WHEN m.pressure <= 1000 THEN 'Deep (500-1000 dbar)'\n        WHEN m.pressure <= 2000 THEN 'Abyssal (1000-2000 dbar)'\n        ELSE 'Deep Ocean (>2000 dbar)'\n    END as depth_zone,\n    COUNT(m.salinity) as measurements,\n    AVG(m.salinity) as avg_salinity_psu,\n    MIN(m.salinity) as min_salinity,\n    MAX(m.salinity) as max_salinity,\n    STDDEV(m.salinity) as salinity_std_dev,\n    AVG(m.pressure) as avg_pressure_dbar\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nWHERE m.salinity IS NOT NULL \nAND m.salinity_qc = 1\nAND m.pressure IS NOT NULL\nGROUP BY depth_zone\nORDER BY AVG(m.pressure)\n\nQuery Variations:\n- Show me salinity distribution at different depths\n- salinity by depth zones\n- salinity depth distribution\n- halocline analysis\n- salinity profile by pressure\n- depth salinity analysis\n- salinity vs depth distribution\n- salinity stratification analysis\n- salinity depth zones\n- depth-wise salinity stats\n- ocean salinity layers\n- vertical salinity structure\n- halocline structure analysis",
+      "metadata": {
+        "type": "salinity_depth_distribution",
+        "category": "vertical_ocean_structure",
+        "complexity": "medium",
+        "analysis_level": "depth_stratified",
+        "parameter": "salinity_vertical",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "salinity_regional_dynamic_008",
+      "content": "Regional Salinity Analysis\nIntent: Identify ocean regions with highest and lowest salinity patterns\n\nSQL Query: SELECT \n    CASE \n        WHEN p.longitude BETWEEN 50 AND 75 AND p.latitude BETWEEN 10 AND 25 THEN 'Arabian Sea'\n        WHEN p.longitude BETWEEN 80 AND 100 AND p.latitude BETWEEN 5 AND 25 THEN 'Bay of Bengal'\n        WHEN p.longitude BETWEEN 60 AND 95 AND p.latitude BETWEEN -10 AND 5 THEN 'Equatorial Indian Ocean'\n        ELSE 'Other Indian Ocean'\n    END as ocean_region,\n    COUNT(m.salinity) as salinity_measurements,\n    AVG(m.salinity) as avg_salinity_psu,\n    MIN(m.salinity) as min_salinity,\n    MAX(m.salinity) as max_salinity,\n    STDDEV(m.salinity) as salinity_std_dev,\n    COUNT(DISTINCT p.profile_id) as profiles_in_region,\n    COUNT(DISTINCT p.float_id) as floats_in_region\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nWHERE m.salinity IS NOT NULL \nAND m.salinity_qc = 1\nGROUP BY ocean_region\nORDER BY avg_salinity_psu DESC\n\nQuery Variations:\n- Which region has the highest salinity?\n- highest salinity region\n- maximum salinity area\n- saltiest ocean region\n- salinity by geographic region\n- regional salinity comparison\n- ocean region salinity analysis\n- geographic salinity distribution\n- salinity hotspot regions\n- regional salt content analysis\n- ocean basin salinity patterns\n- geographic salinity variation\n- regional ocean salinity\n- basin salinity analysis",
+      "metadata": {
+        "type": "salinity_regional",
+        "category": "geographic_analysis",
+        "complexity": "medium",
+        "analysis_level": "regional_comparative",
+        "parameter": "salinity_geographic",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "depth_extreme_dynamic_009",
+      "content": "Deepest Measurements Analysis\nIntent: Identify deepest ocean measurements and diving capabilities of ARGO floats\n\nSQL Query: SELECT \n    p.profile_id,\n    p.float_id,\n    f.wmo_number,\n    p.profile_date,\n    p.latitude,\n    p.longitude,\n    m.pressure as maximum_pressure_dbar,\n    m.temperature,\n    m.salinity,\n    m.pressure_qc,\n    CASE \n        WHEN m.pressure > 2000 THEN 'Abyssal Diving (>2000 dbar)'\n        WHEN m.pressure > 1500 THEN 'Deep Diving (1500-2000 dbar)'\n        WHEN m.pressure > 1000 THEN 'Intermediate Diving (1000-1500 dbar)'\n        ELSE 'Shallow Diving (<1000 dbar)'\n    END as diving_capability\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.pressure IS NOT NULL \nAND m.pressure_qc = 1\nORDER BY m.pressure DESC \nLIMIT 10\n\nQuery Variations:\n- How deep do these instruments go?\n- What are the deepest ocean measurements?\n- Show me the deepest diving data\n- How deep can ARGO floats dive?\n- What's the maximum depth reached?\n- Tell me about deep ocean exploration\n- Deepest water column measurements\n- How far down do floats go?\n- Maximum diving capabilities\n- Deep ocean measurement limits\n- Maximum pressure measurements\n- Abyssal zone data collection\n- Deep water profiling limits\n- Bathymetric measurement range\n- Ocean depth profiling capabilities\n",
+      "metadata": {
+        "type": "depth_extremes",
+        "category": "extreme_value_analysis",
+        "complexity": "medium",
+        "analysis_level": "measurement_specific",
+        "parameter": "pressure_maximum",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "ts_relationship_dynamic_010",
+      "content": "Temperature-Salinity Relationship Analysis\nIntent: Analyze thermohaline properties and water mass characteristics\n\nSQL Query: SELECT \n    ROUND(m.temperature, 1) as temperature_bin,\n    ROUND(m.salinity, 2) as salinity_bin,\n    COUNT(*) as measurement_count,\n    AVG(m.pressure) as avg_pressure_dbar,\n    COUNT(DISTINCT p.profile_id) as profiles_contributing,\n    CASE \n        WHEN m.temperature > 25 AND m.salinity > 35 THEN 'Warm Saline Water'\n        WHEN m.temperature > 25 AND m.salinity < 35 THEN 'Warm Fresh Water' \n        WHEN m.temperature < 10 AND m.salinity > 34.5 THEN 'Cold Saline Water'\n        WHEN m.temperature < 10 AND m.salinity < 34.5 THEN 'Cold Fresh Water'\n        ELSE 'Intermediate Water Mass'\n    END as water_mass_type\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nWHERE m.temperature IS NOT NULL \nAND m.salinity IS NOT NULL\nAND m.temperature_qc = 1 \nAND m.salinity_qc = 1\nGROUP BY temperature_bin, salinity_bin, water_mass_type\nHAVING COUNT(*) >= 100\nORDER BY measurement_count DESC\nLIMIT 20\n\nQuery Variations:\n- Show temperature-salinity relationship\n- T-S diagram analysis\n- temperature salinity correlation\n- water mass T-S characteristics\n- thermohaline analysis\n- temperature vs salinity\n- T-S scatter analysis\n- ocean water mass identification\n- salinity temperature relationship\n- thermohaline properties\n- T-S relationship analysis\n- water mass classification\n- temperature salinity distribution\n- thermohaline structure\n- ocean T-S properties\n- water mass T-S diagram",
+      "metadata": {
+        "type": "temperature_salinity_relationship",
+        "category": "water_mass_analysis",
+        "complexity": "high",
+        "analysis_level": "multivariate_analysis",
+        "parameter": "temperature_salinity_combined",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "seasonal_temp_dynamic_011",
+      "content": "Seasonal Temperature Analysis\nIntent: Analyze temperature variations by season and month for climate monitoring\n\nSQL Query: SELECT \n    EXTRACT(MONTH FROM CAST(p.profile_date AS TIMESTAMP)) as month,\n    CASE \n        WHEN EXTRACT(MONTH FROM CAST(p.profile_date AS TIMESTAMP)) IN (12,1,2) THEN 'Winter'\n        WHEN EXTRACT(MONTH FROM CAST(p.profile_date AS TIMESTAMP)) IN (3,4,5) THEN 'Spring'\n        WHEN EXTRACT(MONTH FROM CAST(p.profile_date AS TIMESTAMP)) IN (6,7,8) THEN 'Summer'\n        ELSE 'Autumn'\n    END as season,\n    COUNT(m.temperature) as measurements,\n    AVG(m.temperature) as avg_temperature,\n    MIN(m.temperature) as min_temperature,\n    MAX(m.temperature) as max_temperature,\n    STDDEV(m.temperature) as temp_std_dev,\n    COUNT(DISTINCT p.profile_id) as profiles,\n    AVG(m.pressure) as avg_depth\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nWHERE m.temperature IS NOT NULL AND m.temperature_qc = 1\nGROUP BY month, season\nORDER BY month\n\nExpected Results:\n- Winter (Dec-Feb): 9.7-9.9\u00b0C average temperatures\n- Spring (Mar-May): 9.8-10.0\u00b0C with increasing trend\n- Summer (Jun-Aug): 10.0-10.1\u00b0C warmest period\n- Autumn (Sep-Nov): 10.0-10.3\u00b0C variable temperatures\n\nQuery Variations:\n- temperature by season\n- seasonal temperature variation\n- monthly temperature analysis\n- temperature seasonal patterns\n- seasonal ocean temperature\n- monthly temperature trends\n- temperature by month\n- seasonal temperature changes\n- climate temperature patterns\n- temperature seasonal cycle\n- ocean temperature seasons\n- monthly ocean temperature\n- seasonal thermal patterns\n- temperature monthly variation",
+      "metadata": {
+        "type": "seasonal_temperature",
+        "category": "temporal_analysis",
+        "complexity": "medium",
+        "analysis_level": "temporal_comparative",
+        "parameter": "temperature_seasonal",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "salinity_anomalies_dynamic_012",
+      "content": "Salinity Anomalies Detection\nIntent: Identify unusual salinity measurements for anomaly detection and water mass tracking\n\nSQL Query: WITH salinity_stats AS (\n    SELECT AVG(salinity) as mean_sal, STDDEV(salinity) as std_sal\n    FROM measurements WHERE salinity_qc = 1 AND salinity IS NOT NULL\n)\nSELECT \n    p.profile_id, p.latitude, p.longitude, p.profile_date,\n    m.salinity, m.pressure,\n    (m.salinity - s.mean_sal) / s.std_sal as salinity_anomaly,\n    CASE \n        WHEN ABS((m.salinity - s.mean_sal) / s.std_sal) > 3 THEN 'Extreme Anomaly'\n        WHEN ABS((m.salinity - s.mean_sal) / s.std_sal) > 2 THEN 'Strong Anomaly'\n        ELSE 'Normal'\n    END as anomaly_type\nFROM measurements m\nJOIN profiles p ON m.profile_id = p.profile_id\nCROSS JOIN salinity_stats s\nWHERE m.salinity_qc = 1 AND ABS((m.salinity - s.mean_sal) / s.std_sal) > 2\nORDER BY ABS((m.salinity - s.mean_sal) / s.std_sal) DESC\nLIMIT 20\n\nExpected Results:\n- Extreme freshening events: 28.2 PSU vs 34.9 normal (21\u03c3 anomaly)\n- Geographic concentration: Bay of Bengal river discharge areas\n- Surface layer anomalies: Monsoon precipitation effects\n- Temporal patterns: Seasonal freshwater input events\n\nQuery Variations:\n- Are there unusual salinity readings?\n- Show me weird salt measurements\n- Any abnormal ocean salinity?\n- Strange salinity patterns detected?\n- Unusual seawater salt content?\n- Odd salinity measurements found?\n- Salinity data quality issues?\n- Abnormal salt concentrations?\n- Salinity measurement outliers?\n- Unexpected salinity values?\n- Haline anomaly detection\n- Statistical salinity outliers\n- Salinity deviation analysis\n- CTD salinity quality control\n- Oceanographic data anomalies\n",
+      "metadata": {
+        "type": "salinity_anomalies",
+        "category": "anomaly_detection",
+        "complexity": "high",
+        "analysis_level": "statistical_analysis",
+        "parameter": "salinity_outliers",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "float_performance_dynamic_013",
+      "content": "Float Performance Analysis\nIntent: Analyze ARGO float data quality, operational performance, and measurement reliability\n\nSQL Query: SELECT \n    f.float_id, f.wmo_number, f.current_status,\n    COUNT(DISTINCT p.profile_id) as total_profiles,\n    COUNT(m.measurement_id) as total_measurements,\n    AVG(CASE WHEN m.temperature_qc = 1 THEN 1.0 ELSE 0.0 END) * 100 as temp_quality_percent,\n    AVG(CASE WHEN m.salinity_qc = 1 THEN 1.0 ELSE 0.0 END) * 100 as salinity_quality_percent,\n    MIN(p.profile_date) as first_profile,\n    MAX(p.profile_date) as last_profile,\n    MAX(m.pressure) as max_diving_depth,\n    AVG(m.pressure) as avg_operating_depth\nFROM floats f\nJOIN profiles p ON f.float_id = p.float_id\nJOIN measurements m ON p.profile_id = m.profile_id\nGROUP BY f.float_id, f.wmo_number, f.current_status\nORDER BY total_measurements DESC\n\nExpected Results:\n- Top performer: Float 2902194 with 212K measurements\n- Data quality: 100% temperature and salinity quality across all floats\n- Operational range: 2-8 years active deployment periods\n- Diving capability: Maximum depths 2000-2026 dbar\n\nQuery Variations:\n- float performance analysis\n- ARGO float data quality\n- float measurement statistics\n- instrument performance\n- float reliability analysis\n- best performing floats\n- float operational statistics\n- ARGO float comparison\n- instrument data quality\n- float measurement quality\n- ARGO float efficiency\n- float data reliability\n- instrument performance metrics\n- float operational analysis",
+      "metadata": {
+        "type": "float_performance",
+        "category": "instrument_analysis",
+        "complexity": "medium",
+        "analysis_level": "instrument_comparative",
+        "parameter": "float_statistics",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "mixed_layer_depth_dynamic_014",
+      "content": "Mixed Layer Depth Analysis\nIntent: Calculate mixed layer depth using temperature gradient method for upper ocean structure analysis\n\nSQL Query: WITH surface_temp AS (\n    SELECT profile_id, AVG(temperature) as surface_temp, COUNT(*) as surface_measurements\n    FROM measurements m\n    WHERE pressure <= 10 AND temperature_qc = 1 AND temperature IS NOT NULL\n    GROUP BY profile_id HAVING COUNT(*) >= 3\n),\ntemp_gradient AS (\n    SELECT m.profile_id, m.pressure, m.temperature, s.surface_temp,\n        ABS(m.temperature - s.surface_temp) as temp_diff,\n        ROW_NUMBER() OVER (PARTITION BY m.profile_id ORDER BY m.pressure) as depth_rank\n    FROM measurements m\n    JOIN surface_temp s ON m.profile_id = s.profile_id\n    WHERE m.temperature_qc = 1 AND m.pressure > 10 AND m.pressure <= 500\n),\nmixed_layer AS (\n    SELECT profile_id, MIN(pressure) as mixed_layer_depth, MIN(temperature) as mld_temperature, surface_temp\n    FROM temp_gradient WHERE temp_diff > 0.5 GROUP BY profile_id, surface_temp\n)\nSELECT p.profile_id, p.float_id, f.wmo_number, p.latitude, p.longitude, p.profile_date,\n    COALESCE(ml.mixed_layer_depth, 200.0) as estimated_mld_dbar,\n    ml.surface_temp, ml.mld_temperature,\n    CASE \n        WHEN COALESCE(ml.mixed_layer_depth, 200.0) < 30 THEN 'Very Shallow MLD'\n        WHEN COALESCE(ml.mixed_layer_depth, 200.0) < 60 THEN 'Shallow MLD'\n        WHEN COALESCE(ml.mixed_layer_depth, 200.0) < 100 THEN 'Moderate MLD'\n        WHEN COALESCE(ml.mixed_layer_depth, 200.0) < 150 THEN 'Deep MLD'\n        ELSE 'Very Deep MLD'\n    END as mld_category\nFROM profiles p\nJOIN floats f ON p.float_id = f.float_id\nLEFT JOIN mixed_layer ml ON p.profile_id = ml.profile_id\nWHERE p.profile_id IN (SELECT profile_id FROM surface_temp)\nORDER BY estimated_mld_dbar DESC\nLIMIT 20\n\nExpected Results:\n- Very deep MLDs: 200-365 dbar in subtropical regions during winter\n- Surface temperatures: 17-19\u00b0C during deep mixing events\n- Geographic patterns: Deeper MLDs at higher latitudes\n- Seasonal timing: Winter mixing periods (Jan-Mar)\n\nQuery Variations:\n- mixed layer depth analysis\n- MLD calculation\n- surface mixing depth\n- thermocline depth\n- upper ocean structure\n- mixed layer analysis\n- ocean surface mixing\n- MLD estimation\n- surface layer depth\n- ocean mixing analysis\n- thermocline structure\n- upper ocean mixing\n- surface ocean stratification\n- mixed layer properties",
+      "metadata": {
+        "type": "mixed_layer_depth",
+        "category": "upper_ocean_structure",
+        "complexity": "high",
+        "analysis_level": "complex_calculation",
+        "parameter": "mixed_layer_depth",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "water_mass_classification_dynamic_015",
+      "content": "Water Mass Classification Analysis\nIntent: Classify ocean water masses based on temperature-salinity characteristics for water mass identification\n\nSQL Query: WITH ts_analysis AS (\n    SELECT m.temperature, m.salinity, m.pressure, p.latitude, p.longitude,\n        CASE \n            WHEN m.temperature > 28 AND m.salinity BETWEEN 33 AND 35.5 THEN 'Tropical Surface Water'\n            WHEN m.temperature BETWEEN 25 AND 28 AND m.salinity BETWEEN 34.5 AND 36 THEN 'Warm Subtropical Surface'\n            WHEN m.temperature BETWEEN 20 AND 25 AND m.salinity BETWEEN 35 AND 36.2 THEN 'Subtropical Underwater'\n            WHEN m.temperature BETWEEN 15 AND 20 AND m.salinity BETWEEN 35.2 AND 35.8 THEN 'Central Water'\n            WHEN m.temperature BETWEEN 10 AND 15 AND m.salinity BETWEEN 34.8 AND 35.3 THEN 'Intermediate Water'\n            WHEN m.temperature BETWEEN 8 AND 12 AND m.salinity BETWEEN 34.6 AND 34.9 THEN 'Upper Deep Water'\n            WHEN m.temperature BETWEEN 4 AND 8 AND m.salinity BETWEEN 34.65 AND 34.85 THEN 'Middle Deep Water'\n            WHEN m.temperature BETWEEN 2 AND 4 AND m.salinity BETWEEN 34.7 AND 34.8 THEN 'Lower Deep Water'\n            WHEN m.temperature < 3 AND m.salinity > 34.7 THEN 'Bottom Water'\n            WHEN m.temperature > 25 AND m.salinity < 33 THEN 'Fresh Surface Water'\n            ELSE 'Transitional Water Mass'\n        END as water_mass_type,\n        CASE \n            WHEN m.pressure <= 100 THEN 'Surface Layer'\n            WHEN m.pressure <= 500 THEN 'Upper Ocean'\n            WHEN m.pressure <= 1000 THEN 'Intermediate Layer'\n            ELSE 'Deep Layer'\n        END as depth_layer\n    FROM measurements m\n    JOIN profiles p ON m.profile_id = p.profile_id\n    WHERE m.temperature_qc = 1 AND m.salinity_qc = 1\n)\nSELECT water_mass_type, depth_layer, COUNT(*) as measurement_count,\n    AVG(temperature) as avg_temperature, AVG(salinity) as avg_salinity,\n    AVG(pressure) as avg_depth, STDDEV(temperature) as temp_std, STDDEV(salinity) as sal_std,\n    CASE \n        WHEN COUNT(*) > 50000 THEN 'Dominant Water Mass'\n        WHEN COUNT(*) > 10000 THEN 'Major Water Mass'\n        WHEN COUNT(*) > 5000 THEN 'Significant Water Mass'\n        ELSE 'Minor Water Mass'\n    END as water_mass_importance\nFROM ts_analysis\nGROUP BY water_mass_type, depth_layer\nHAVING COUNT(*) >= 1000\nORDER BY measurement_count DESC\nLIMIT 20\n\nExpected Results:\n- Dominant: Lower Deep Water (3\u00b0C, 34.8 PSU) at 1875 dbar\n- Major: Tropical Surface Water (29\u00b0C, 34.3 PSU) at 34 dbar\n- Fresh Surface Water: 28\u00b0C, 32.4 PSU from river discharge\n- Geographic patterns: Water mass distribution across Indian Ocean\n\nQuery Variations:\n- What types of water are there?\n- Different ocean water characteristics?\n- Water mass identification analysis\n- Ocean water classification system\n- Types of seawater properties\n- Water mass property analysis\n- Ocean water type identification\n- Different water mass characteristics\n- Seawater classification analysis\n- Ocean water mass properties\n- T-S diagram analysis\n- Thermohaline classification\n- Water mass T-S properties\n- Oceanographic water typing\n- Hydrographic water mass analysis\n",
+      "metadata": {
+        "type": "water_mass_classification",
+        "category": "water_mass_analysis",
+        "complexity": "high",
+        "analysis_level": "multivariate_classification",
+        "parameter": "water_mass_types",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "geographic_distribution_dynamic_016",
+      "content": "Geographic Distribution Analysis\nIntent: Analyze the spatial distribution of ARGO float measurements across latitude and longitude\n\nSQL Query: SELECT \n    CASE \n        WHEN p.latitude >= 30 THEN 'Northern Subtropical (\u226530\u00b0N)'\n        WHEN p.latitude >= 10 THEN 'Northern Tropical (10-30\u00b0N)'\n        WHEN p.latitude >= -10 THEN 'Equatorial (-10 to 10\u00b0N)'\n        WHEN p.latitude >= -30 THEN 'Southern Tropical (-30 to -10\u00b0S)'\n        ELSE 'Southern Subtropical (<-30\u00b0S)'\n    END as latitude_zone,\n    CASE \n        WHEN p.longitude BETWEEN 40 AND 60 THEN 'Western Arabian Sea (40-60\u00b0E)'\n        WHEN p.longitude BETWEEN 60 AND 80 THEN 'Central Indian Ocean (60-80\u00b0E)'\n        WHEN p.longitude BETWEEN 80 AND 100 THEN 'Bay of Bengal (80-100\u00b0E)'\n        WHEN p.longitude BETWEEN 100 AND 120 THEN 'Southeast Indian (100-120\u00b0E)'\n        ELSE 'Eastern Indian Ocean (>120\u00b0E)'\n    END as longitude_zone,\n    COUNT(DISTINCT p.profile_id) as total_profiles,\n    COUNT(m.measurement_id) as total_measurements,\n    COUNT(DISTINCT p.float_id) as active_floats,\n    AVG(p.latitude) as avg_latitude,\n    AVG(p.longitude) as avg_longitude,\n    MIN(p.profile_date) as first_measurement,\n    MAX(p.profile_date) as latest_measurement\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nGROUP BY latitude_zone, longitude_zone\nORDER BY total_measurements DESC\n\nExpected Results:\n- Bay of Bengal: Highest measurement density due to monsoon freshwater inputs\n- Arabian Sea: High activity near upwelling zones\n- Southern Indian Ocean: Fewer measurements in remote areas\n- Equatorial region: Consistent coverage across longitude bands\n\nQuery Variations:\n- where is ARGO data collected\n- geographic coverage of measurements\n- latitude longitude distribution\n- spatial data distribution\n- where are the floats located\n- global measurement coverage\n- geographic data density\n- location of ocean measurements\n- spatial coverage analysis\n- where do we have data\n- measurement geographic spread\n- float location distribution\n- spatial data availability\n- geographic measurement patterns\n- regional data coverage\n- ocean measurement locations\n- global float distribution\n- geographic data analysis\n- spatial measurement coverage\n- location-based data summary",
+      "metadata": {
+        "type": "geographic_distribution",
+        "category": "spatial_analysis",
+        "complexity": "medium",
+        "analysis_level": "geographic_binning",
+        "parameter": "spatial_coverage",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "ocean_basin_comparison_dynamic_017",
+      "content": "Ocean Basin Comparison Analysis\nIntent: Compare oceanographic properties between major Indian Ocean regions\n\nSQL Query: SELECT \n    CASE \n        WHEN p.longitude BETWEEN 40 AND 70 AND p.latitude BETWEEN 10 AND 25 THEN 'Arabian Sea'\n        WHEN p.longitude BETWEEN 80 AND 95 AND p.latitude BETWEEN 5 AND 25 THEN 'Bay of Bengal'\n        WHEN p.longitude BETWEEN 70 AND 100 AND p.latitude BETWEEN -10 AND 10 THEN 'Equatorial Indian Ocean'\n        WHEN p.longitude BETWEEN 90 AND 120 AND p.latitude BETWEEN -30 AND 0 THEN 'Southeast Indian Ocean'\n        WHEN p.latitude < -15 AND p.longitude BETWEEN 40 AND 80 THEN 'Southwest Indian Ocean'\n        ELSE 'Central Indian Ocean'\n    END as ocean_basin,\n    COUNT(DISTINCT p.profile_id) as profiles,\n    AVG(m.temperature) as avg_temperature_celsius,\n    AVG(m.salinity) as avg_salinity_psu,\n    AVG(m.pressure) as avg_measurement_depth,\n    MIN(m.temperature) as min_temperature,\n    MAX(m.temperature) as max_temperature,\n    MIN(m.salinity) as min_salinity,\n    MAX(m.salinity) as max_salinity,\n    STDDEV(m.temperature) as temp_variability,\n    STDDEV(m.salinity) as salinity_variability,\n    COUNT(DISTINCT p.float_id) as contributing_floats\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nWHERE m.temperature_qc = 1 AND m.salinity_qc = 1\nGROUP BY ocean_basin\nORDER BY profiles DESC\n\nExpected Results:\n- Arabian Sea: Highest salinity due to evaporation, warm temperatures\n- Bay of Bengal: Lower salinity due to river discharge, seasonal variations\n- Equatorial region: Consistently warm temperatures, stable salinity\n- Southern basins: Cooler temperatures, higher salinity at depth\n\nQuery Variations:\n- compare ocean basins\n- regional ocean differences\n- basin comparison analysis\n- ocean region properties\n- compare different sea areas\n- regional oceanographic comparison\n- basin temperature differences\n- ocean area analysis\n- regional water properties\n- compare Arabian Sea Bay of Bengal\n- ocean basin characteristics\n- regional ocean analysis\n- basin property comparison\n- ocean region statistics\n- comparative basin analysis\n- regional oceanographic patterns\n- ocean basin temperature salinity\n- comparative regional analysis\n- basin water mass differences\n- regional ocean variations",
+      "metadata": {
+        "type": "ocean_basin_comparison",
+        "category": "comparative_regional_analysis",
+        "complexity": "high",
+        "analysis_level": "multi_regional_comparison",
+        "parameter": "basin_properties",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "latitude_temperature_gradient_dynamic_018",
+      "content": "Latitude-based Temperature Gradient Analysis\nIntent: Analyze temperature variation with latitude to understand thermal gradients across the Indian Ocean\n\nSQL Query: SELECT \n    CASE \n        WHEN p.latitude >= 30 THEN '30\u00b0N and above'\n        WHEN p.latitude >= 20 THEN '20-30\u00b0N'\n        WHEN p.latitude >= 10 THEN '10-20\u00b0N'\n        WHEN p.latitude >= 0 THEN '0-10\u00b0N'\n        WHEN p.latitude >= -10 THEN '0-10\u00b0S'\n        WHEN p.latitude >= -20 THEN '10-20\u00b0S'\n        ELSE '20\u00b0S and below'\n    END as latitude_band,\n    COUNT(m.temperature) as temperature_measurements,\n    AVG(m.temperature) as avg_temperature_celsius,\n    MIN(m.temperature) as min_temperature,\n    MAX(m.temperature) as max_temperature,\n    STDDEV(m.temperature) as temperature_std_dev,\n    AVG(p.latitude) as band_center_latitude,\n    COUNT(DISTINCT p.profile_id) as profiles_in_band,\n    AVG(m.pressure) as avg_measurement_depth\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nWHERE m.temperature IS NOT NULL AND m.temperature_qc = 1\nGROUP BY latitude_band\nORDER BY band_center_latitude DESC\n\nExpected Results:\n- Northern latitudes (>20\u00b0N): Warmest surface waters due to Arabian Sea heating\n- Equatorial band (\u00b110\u00b0): Consistently warm but variable due to upwelling\n- Southern latitudes (<-10\u00b0S): Cooler temperatures, more seasonal variation\n- Clear thermal gradient from north to south across the Indian Ocean\n\nQuery Variations:\n- temperature by latitude\n- thermal gradient analysis\n- temperature latitude relationship\n- equatorial vs polar temperatures\n- latitudinal temperature variation\n- north south temperature differences\n- temperature gradient with latitude\n- thermal patterns by latitude\n- latitude temperature distribution\n- meridional temperature gradient\n- temperature versus latitude\n- latitudinal thermal analysis\n- north south thermal gradient\n- temperature change with latitude\n- geographic temperature patterns\n- thermal distribution by latitude\n- latitude dependent temperature\n- meridional thermal structure\n- temperature latitude correlation\n- latitudinal ocean temperature",
+      "metadata": {
+        "type": "latitude_temperature_gradient",
+        "category": "meridional_analysis",
+        "complexity": "medium",
+        "analysis_level": "latitudinal_binning",
+        "parameter": "temperature_latitude",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "coastal_open_ocean_dynamic_019",
+      "content": "Coastal vs Open Ocean Analysis\nIntent: Compare nearshore coastal waters with open ocean measurements\n\nSQL Query: SELECT \n    CASE \n        WHEN (p.longitude BETWEEN 50 AND 75 AND p.latitude BETWEEN 15 AND 25) \n          OR (p.longitude BETWEEN 80 AND 90 AND p.latitude BETWEEN 8 AND 22) THEN 'Coastal Waters'\n        WHEN p.longitude BETWEEN 60 AND 90 AND p.latitude BETWEEN -5 AND 15 THEN 'Semi-Coastal'\n        ELSE 'Open Ocean'\n    END as water_type,\n    COUNT(DISTINCT p.profile_id) as total_profiles,\n    COUNT(m.measurement_id) as total_measurements,\n    AVG(m.temperature) as avg_temperature_celsius,\n    AVG(m.salinity) as avg_salinity_psu,\n    MIN(m.salinity) as min_salinity,\n    MAX(m.salinity) as max_salinity,\n    STDDEV(m.salinity) as salinity_variability,\n    STDDEV(m.temperature) as temperature_variability,\n    AVG(m.pressure) as avg_depth_sampled,\n    COUNT(DISTINCT p.float_id) as floats_operating\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nWHERE m.temperature_qc = 1 AND m.salinity_qc = 1\nGROUP BY water_type\nORDER BY total_profiles DESC\n\nExpected Results:\n- Coastal waters: Lower salinity due to river discharge, higher variability\n- Semi-coastal: Intermediate properties, seasonal freshwater influence\n- Open ocean: Stable salinity, less variability, deeper measurements\n- Bay of Bengal coastal: Significant freshening from Ganges/Brahmaputra\n\nQuery Variations:\n- coastal vs open ocean\n- nearshore vs offshore analysis\n- shelf waters comparison\n- coastal water properties\n- nearshore ocean measurements\n- offshore vs onshore data\n- coastal ocean analysis\n- continental shelf waters\n- nearshore water characteristics\n- coastal vs pelagic waters\n- shallow vs deep water analysis\n- inshore vs offshore comparison\n- coastal ocean properties\n- nearshore vs deep ocean\n- shelf break analysis\n- coastal water salinity\n- nearshore freshwater influence\n- coastal vs oceanic waters\n- shallow water vs deep ocean\n- coastal measurement analysis",
+      "metadata": {
+        "type": "coastal_open_ocean",
+        "category": "coastal_oceanic_comparison",
+        "complexity": "high",
+        "analysis_level": "distance_based_classification",
+        "parameter": "coastal_oceanic_properties",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "data_density_hotspots_dynamic_020",
+      "content": "Data Density Hotspots Analysis\nIntent: Identify geographic areas with highest ARGO measurement density and data concentration\n\nSQL Query: SELECT \n    ROUND(p.latitude, 1) as lat_grid,\n    ROUND(p.longitude, 1) as lon_grid,\n    COUNT(DISTINCT p.profile_id) as profiles_in_grid,\n    COUNT(m.measurement_id) as total_measurements,\n    COUNT(DISTINCT p.float_id) as unique_floats,\n    AVG(m.temperature) as avg_temperature,\n    AVG(m.salinity) as avg_salinity,\n    MIN(p.profile_date) as first_measurement_date,\n    MAX(p.profile_date) as latest_measurement_date,\n    CASE \n        WHEN COUNT(m.measurement_id) > 50000 THEN 'Very High Density'\n        WHEN COUNT(m.measurement_id) > 20000 THEN 'High Density'\n        WHEN COUNT(m.measurement_id) > 10000 THEN 'Medium Density'\n        WHEN COUNT(m.measurement_id) > 5000 THEN 'Low Density'\n        ELSE 'Sparse Coverage'\n    END as density_category,\n    ROUND(AVG(p.latitude), 2) as center_latitude,\n    ROUND(AVG(p.longitude), 2) as center_longitude\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nGROUP BY lat_grid, lon_grid\nHAVING COUNT(m.measurement_id) >= 5000\nORDER BY total_measurements DESC\nLIMIT 20\n\nExpected Results:\n- Bay of Bengal hotspot: High density due to monsoon research focus\n- Arabian Sea upwelling zones: Concentrated measurements\n- Equatorial Indian Ocean: Consistent but moderate density\n- Southern Ocean frontal zones: Targeted sampling areas\n\nQuery Variations:\n- where is most data collected\n- measurement density hotspots\n- data concentration areas\n- highest data density regions\n- where most measurements taken\n- data collection hotspots\n- measurement concentration zones\n- high density data areas\n- most sampled locations\n- data clustering analysis\n- measurement frequency by location\n- geographic data intensity\n- high activity measurement zones\n- data density distribution\n- measurement hotspot analysis\n- concentrated sampling areas\n- peak data collection regions\n- maximum measurement density\n- data rich geographic areas\n- intensive sampling locations",
+      "metadata": {
+        "type": "data_density_hotspots",
+        "category": "data_coverage_analysis",
+        "complexity": "medium",
+        "analysis_level": "spatial_density_analysis",
+        "parameter": "measurement_density",
+        "created_from": "oceanographic_understanding"
+      }
+    },
+    {
+      "id": "individual_profile_temperature_analysis_001",
+      "content": "Individual Profile Temperature Analysis\nIntent: Calculate temperature statistics for each individual ARGO profile separately\n\nSQL Query: SELECT \n    p.profile_id,\n    p.float_id,\n    f.wmo_number,\n    p.profile_date,\n    p.latitude,\n    p.longitude,\n    COUNT(m.temperature) as temperature_measurements,\n    AVG(m.temperature) as average_temperature_celsius,\n    MIN(m.temperature) as minimum_temperature,\n    MAX(m.temperature) as maximum_temperature,\n    STDDEV(m.temperature) as temperature_std_deviation,\n    AVG(m.pressure) as average_depth_dbar\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.temperature IS NOT NULL \nAND m.temperature_qc = 1\nGROUP BY p.profile_id, p.float_id, f.wmo_number, p.profile_date, p.latitude, p.longitude\nORDER BY p.profile_id\n\nAnalysis Details:\n- Provides individual temperature statistics for each profile separately\n- Groups measurements by profile_id to get per-profile averages\n- Includes geographic context (lat/lon) for each profile\n- Quality controlled measurements only (temperature_qc = 1)\n- Shows measurement count and depth information per profile\n\nExpected Results:\n- 3,130 individual profile records (one per profile)\n- Profile-specific temperature averages ranging from ~2-30°C\n- Individual profile temperature ranges and variability\n- Geographic distribution of individual profile characteristics\n\nQuery Variations:\n- temperature average for each profile\n- give me temperature average for each profile\n- temperature per profile\n- individual profile temperature\n- each profile temperature average\n- profile-specific temperature analysis\n- temperature statistics by profile\n- per-profile temperature analysis\n- individual profile temperature statistics\n- temperature data for each profile\n- profile by profile temperature\n- each individual profile temperature\n- temperature average per profile\n- profile-level temperature analysis\n- individual profile thermal analysis\n- temperature for individual profiles\n- per profile temperature statistics\n- each profile thermal data\n- profile-specific temperature stats\n- individual profile temperature data",
+      "metadata": {
+        "category": "individual_profile_analysis",
+        "intent": "individual_statistics",
+        "grouping_level": "profile",
+        "parameter": "temperature", 
+        "analysis_type": "statistical_summary",
+        "complexity": "basic",
+        "created_from": "precision_improvement_fix"
+      }
+    },
+    {
+      "id": "individual_profile_salinity_analysis_002", 
+      "content": "Individual Profile Salinity Analysis\nIntent: Calculate salinity statistics for each individual ARGO profile separately\n\nSQL Query: SELECT \n    p.profile_id,\n    p.float_id,\n    f.wmo_number,\n    p.profile_date,\n    p.latitude,\n    p.longitude,\n    COUNT(m.salinity) as salinity_measurements,\n    AVG(m.salinity) as average_salinity_psu,\n    MIN(m.salinity) as minimum_salinity,\n    MAX(m.salinity) as maximum_salinity,\n    STDDEV(m.salinity) as salinity_std_deviation,\n    AVG(m.pressure) as average_depth_dbar\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.salinity IS NOT NULL \nAND m.salinity_qc = 1\nGROUP BY p.profile_id, p.float_id, f.wmo_number, p.profile_date, p.latitude, p.longitude\nORDER BY p.profile_id\n\nAnalysis Details:\n- Provides individual salinity statistics for each profile separately\n- Groups measurements by profile_id to get per-profile averages\n- Includes geographic context (lat/lon) for each profile\n- Quality controlled measurements only (salinity_qc = 1)\n- Shows measurement count and depth information per profile\n\nExpected Results:\n- 3,130 individual profile records (one per profile)\n- Profile-specific salinity averages ranging from ~32-36 PSU\n- Individual profile salinity ranges and variability\n- Geographic distribution of individual profile characteristics\n\nQuery Variations:\n- salinity average for each profile\n- give me salinity average for each profile\n- salinity per profile\n- individual profile salinity\n- each profile salinity average\n- profile-specific salinity analysis\n- salinity statistics by profile\n- per-profile salinity analysis\n- individual profile salinity statistics\n- salinity data for each profile\n- profile by profile salinity\n- each individual profile salinity\n- salinity average per profile\n- profile-level salinity analysis\n- individual profile salinity data\n- per profile salinity statistics\n- each profile salinity data\n- profile-specific salinity stats\n- individual profile salt analysis",
+      "metadata": {
+        "category": "individual_profile_analysis",
+        "intent": "individual_statistics", 
+        "grouping_level": "profile",
+        "parameter": "salinity",
+        "analysis_type": "statistical_summary",
+        "complexity": "basic",
+        "created_from": "precision_improvement_fix"
+      }
+    },
+    {
+      "id": "individual_profile_comprehensive_analysis_003",
+      "content": "Individual Profile Comprehensive Analysis\nIntent: Calculate comprehensive statistics for each individual ARGO profile (temperature, salinity, depth)\n\nSQL Query: SELECT \n    p.profile_id,\n    p.float_id,\n    f.wmo_number,\n    p.profile_date,\n    p.latitude,\n    p.longitude,\n    COUNT(m.measurement_id) as total_measurements,\n    COUNT(m.temperature) as temperature_measurements,\n    COUNT(m.salinity) as salinity_measurements,\n    AVG(m.temperature) as avg_temperature_celsius,\n    AVG(m.salinity) as avg_salinity_psu,\n    AVG(m.pressure) as avg_pressure_dbar,\n    MIN(m.temperature) as min_temperature,\n    MAX(m.temperature) as max_temperature,\n    MIN(m.salinity) as min_salinity,\n    MAX(m.salinity) as max_salinity,\n    MIN(m.pressure) as min_depth_dbar,\n    MAX(m.pressure) as max_depth_dbar,\n    STDDEV(m.temperature) as temp_std_dev,\n    STDDEV(m.salinity) as sal_std_dev\nFROM profiles p\nJOIN measurements m ON p.profile_id = m.profile_id\nJOIN floats f ON p.float_id = f.float_id\nWHERE m.temperature_qc = 1 AND m.salinity_qc = 1\nGROUP BY p.profile_id, p.float_id, f.wmo_number, p.profile_date, p.latitude, p.longitude\nORDER BY p.profile_id\n\nAnalysis Details:\n- Comprehensive individual statistics for each profile separately\n- Combines temperature, salinity, and depth data per profile\n- Groups measurements by profile_id for individual profile analysis\n- Quality controlled measurements only\n- Complete profile characterization\n\nExpected Results:\n- 3,130 individual profile records with complete statistics\n- Each profile's full oceanographic signature\n- Individual profile ranges and variability for all parameters\n- Complete individual profile characterization\n\nQuery Variations:\n- comprehensive stats for each profile\n- complete analysis for each profile\n- full statistics per profile\n- individual profile complete analysis\n- each profile comprehensive data\n- profile-specific complete statistics\n- individual profile full analysis\n- comprehensive data per profile\n- complete profile statistics individually\n- each profile full oceanographic analysis\n- individual comprehensive profile stats\n- profile by profile complete analysis\n- each individual profile statistics\n- comprehensive individual profile data\n- full analysis for each profile\n- complete statistics by profile\n- individual profile oceanographic analysis\n- per profile comprehensive statistics\n- each profile complete oceanographic data\n- profile-level comprehensive analysis",
+      "metadata": {
+        "category": "individual_profile_analysis",
+        "intent": "individual_comprehensive",
+        "grouping_level": "profile", 
+        "parameter": "all_parameters",
+        "analysis_type": "comprehensive_summary",
+        "complexity": "intermediate",
+        "created_from": "precision_improvement_fix"
+      }
     }
   ],
   "summary": {
-    "total_queries": 384,
+    "total_queries": 407,
     "query_types": [
       "count_query",
       "table_query",

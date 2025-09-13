@@ -29,7 +29,7 @@ class WorkingChromaManager:
     
     def __init__(self, hf_token: Optional[str] = None):
         self.hf_token = hf_token
-        self.current_model = "sentence-transformers/all-MiniLM-L6-v2"
+        self.current_model = "all-MiniLM-L6-v2"  # Local-only model, no API needed
         self._init_fast_model()
         self._init_chromadb()
     
@@ -90,29 +90,58 @@ class WorkingChromaManager:
             'embedding_method': 'sentence_transformers_local'
         }
     
-    def populate_with_optimized_data(self):
-        """Load optimized data quickly"""
+    def populate_with_optimized_data(self, force_reload=False):
+        """Load optimized data only if needed"""
+        
+        # Check if collection already has data
+        try:
+            current_count = self.collection.count()
+            if current_count > 0 and not force_reload:
+                print(f"[INFO] ChromaDB already has {current_count} queries - skipping reload")
+                print(f"[INFO] Use force_reload=True to recreate collection")
+                return
+        except Exception as e:
+            print(f"[INFO] Could not check collection count: {e}")
+        
+        # Only load from JSON if we need to recreate
         try:
             with open('optimized_chromadb_data.json', 'r') as f:
                 optimized_data = json.load(f)
         except FileNotFoundError:
             print("[ERROR] optimized_chromadb_data.json not found!")
-            print("Run: python analyze_parquet_schema.py first")
+            print("ChromaDB collection will be used as-is")
             return
         
         queries = optimized_data['queries']
-        print(f"[INFO] Loading {len(queries)} optimized queries with fast embeddings...")
+        print(f"[INFO] Recreating ChromaDB with {len(queries)} optimized queries...")
         
-        # Clear and recreate
+        # Clear existing collection data instead of deleting/recreating
         try:
-            self.client.delete_collection(self.collection_name)
-        except:
-            pass
-        
-        self.collection = self.client.create_collection(
-            name=self.collection_name,
-            embedding_function=self.embedding_function
-        )
+            # Get all IDs and delete them to clear the collection
+            all_data = self.collection.get()
+            if all_data['ids']:
+                print(f"[INFO] Clearing {len(all_data['ids'])} existing items from collection")
+                self.collection.delete(ids=all_data['ids'])
+            else:
+                print(f"[INFO] Collection is already empty")
+        except Exception as e:
+            print(f"[INFO] Could not clear collection, will recreate: {e}")
+            # Only delete and recreate if clearing fails
+            try:
+                self.client.delete_collection(self.collection_name)
+                print(f"[INFO] Deleted existing collection: {self.collection_name}")
+                
+                import time
+                time.sleep(0.5)
+                
+                self.collection = self.client.create_collection(
+                    name=self.collection_name,
+                    embedding_function=self.embedding_function,
+                    metadata={"description": "Working optimized ARGO queries with fast local embeddings"}
+                )
+                print(f"[INFO] Created fresh collection: {self.collection_name}")
+            except Exception as e2:
+                print(f"[INFO] No existing collection to delete: {e2}")
         
         # Process in reasonable batches
         batch_size = 50
@@ -136,37 +165,224 @@ class WorkingChromaManager:
         
         print(f"[SUCCESS] Loaded {len(queries)} queries with fast embeddings!")
     
+    def classify_query_intent(self, query_text: str) -> Dict[str, Any]:
+        """Classify query intent for better context-aware matching"""
+        query_lower = query_text.lower()
+        
+        # Intent classification patterns
+        intent_patterns = {
+            'individual_profile': [
+                'each profile', 'per profile', 'individual profile', 'profile by profile',
+                'for each profile', 'every profile', 'profile-specific', 'profile level'
+            ],
+            'individual_float': [
+                'each float', 'per float', 'individual float', 'float by float', 
+                'for each float', 'every float', 'float-specific', 'float level'
+            ],
+            'geographic': [
+                'latitude', 'longitude', 'region', 'area', 'basin', 'geographic',
+                'location', 'spatial', 'by latitude', 'by region', 'geographic distribution'
+            ],
+            'temporal': [
+                'time', 'date', 'temporal', 'seasonal', 'monthly', 'yearly',
+                'over time', 'by date', 'chronological', 'time series'
+            ],
+            'global_aggregate': [
+                'overall', 'total', 'all profiles', 'all floats', 'across all',
+                'global', 'entire dataset', 'complete', 'comprehensive'
+            ],
+            'simple_retrieval': [
+                'get', 'show', 'retrieve', 'display', 'list', 'fetch',
+                'give me', 'show me', 'data', 'values'
+            ]
+        }
+        
+        # Parameter detection
+        parameter_patterns = {
+            'temperature': ['temp', 'temperature', 'thermal', 'warm', 'cold', 'heat'],
+            'salinity': ['sal', 'salinity', 'salt', 'salty', 'fresh', 'brackish'],
+            'pressure': ['pressure', 'depth', 'deep', 'shallow', 'dbar'],
+            'comprehensive': ['all', 'complete', 'full', 'comprehensive', 'statistics']
+        }
+        
+        # Statistical operation detection  
+        operation_patterns = {
+            'average': ['average', 'avg', 'mean'],
+            'count': ['count', 'number', 'how many'],
+            'min_max': ['min', 'max', 'minimum', 'maximum', 'highest', 'lowest'],
+            'statistics': ['stats', 'statistics', 'analysis', 'summary']
+        }
+        
+        # Classify intent
+        detected_intent = 'unknown'
+        intent_confidence = 0.0
+        
+        for intent, patterns in intent_patterns.items():
+            matches = sum(1 for pattern in patterns if pattern in query_lower)
+            if matches > 0:
+                confidence = matches / len(patterns)
+                if confidence > intent_confidence:
+                    detected_intent = intent
+                    intent_confidence = confidence
+        
+        # Detect parameters
+        detected_parameters = []
+        for param, patterns in parameter_patterns.items():
+            if any(pattern in query_lower for pattern in patterns):
+                detected_parameters.append(param)
+        
+        # Detect operations
+        detected_operations = []
+        for op, patterns in operation_patterns.items():
+            if any(pattern in query_lower for pattern in patterns):
+                detected_operations.append(op)
+        
+        return {
+            'intent': detected_intent,
+            'confidence': intent_confidence,
+            'parameters': detected_parameters,
+            'operations': detected_operations,
+            'grouping_level': self._infer_grouping_level(detected_intent)
+        }
+    
+    def _infer_grouping_level(self, intent: str) -> str:
+        """Infer grouping level from intent"""
+        grouping_map = {
+            'individual_profile': 'profile',
+            'individual_float': 'float', 
+            'geographic': 'region',
+            'temporal': 'time',
+            'global_aggregate': 'global',
+            'simple_retrieval': 'none'
+        }
+        return grouping_map.get(intent, 'unknown')
+    
+    def preprocess_query(self, query_text: str) -> str:
+        """Preprocess query for better semantic matching"""
+        # Oceanographic term expansions
+        expansions = {
+            'temp': 'temperature thermal ocean',
+            'sal': 'salinity salt seawater',
+            'deep': 'depth pressure abyssal',
+            'float': 'ARGO float CTD instrument',
+            'warm': 'temperature thermal hot',
+            'cold': 'temperature thermal cool',
+            'salty': 'salinity salt concentration',
+            'fresh': 'salinity freshwater low salt',
+            'profile': 'oceanographic profile measurement',
+            'anomaly': 'unusual abnormal outlier',
+            'water': 'seawater ocean marine'
+        }
+        
+        # Expand query with related terms
+        expanded_query = query_text.lower()
+        for term, expansion in expansions.items():
+            if term in expanded_query:
+                expanded_query += f" {expansion}"
+        
+        return expanded_query
+
+    def context_aware_similarity_scoring(self, query_intent: Dict, results: List[Dict]) -> List[Dict]:
+        """Apply context-aware similarity scoring based on intent matching"""
+        for result in results:
+            base_similarity = result['similarity']
+            metadata = result.get('metadata', {})
+            
+            # Context penalties and bonuses
+            context_score = 1.0
+            
+            # Grouping level matching bonus/penalty
+            query_grouping = query_intent.get('grouping_level', 'unknown')
+            result_grouping = metadata.get('grouping_level', 'unknown')
+            
+            if query_grouping != 'unknown' and result_grouping != 'unknown':
+                if query_grouping == result_grouping:
+                    context_score *= 1.3  # 30% bonus for matching grouping level
+                else:
+                    context_score *= 0.6   # 40% penalty for wrong grouping level
+            
+            # Intent matching bonus
+            query_intent_type = query_intent.get('intent', 'unknown')
+            result_intent = metadata.get('intent', 'unknown')
+            
+            if query_intent_type != 'unknown' and result_intent != 'unknown':
+                if query_intent_type == result_intent:
+                    context_score *= 1.2  # 20% bonus for matching intent
+                elif self._intent_conflict(query_intent_type, result_intent):
+                    context_score *= 0.5   # 50% penalty for conflicting intent
+            
+            # Parameter matching bonus
+            query_params = set(query_intent.get('parameters', []))
+            result_param = metadata.get('parameter', '')
+            
+            if result_param in query_params:
+                context_score *= 1.15  # 15% bonus for parameter match
+            
+            # Apply context-aware scoring
+            result['context_aware_similarity'] = min(1.0, base_similarity * context_score)
+            result['context_score'] = context_score
+            result['query_intent'] = query_intent
+        
+        return results
+    
+    def _intent_conflict(self, intent1: str, intent2: str) -> bool:
+        """Check if two intents are conflicting"""
+        conflicts = [
+            ('individual_profile', 'geographic'),
+            ('individual_float', 'geographic'),
+            ('individual_profile', 'global_aggregate'),
+            ('individual_float', 'global_aggregate'),
+            ('simple_retrieval', 'global_aggregate')
+        ]
+        
+        return (intent1, intent2) in conflicts or (intent2, intent1) in conflicts
+    
     def semantic_search(self, query_text: str, top_k: int = 10) -> List[Dict]:
-        """Perform semantic search"""
+        """Perform multi-stage semantic search with context awareness"""
         try:
-            results = self.collection.query(
-                query_texts=[query_text],
-                n_results=top_k,
+            # Stage 1: Classify query intent
+            query_intent = self.classify_query_intent(query_text)
+            
+            # Stage 2: Standard semantic search
+            processed_query = self.preprocess_query(query_text)
+            
+            # Get more results for filtering
+            raw_results = self.collection.query(
+                query_texts=[processed_query],
+                n_results=min(top_k * 3, 30),  # Get 3x results for filtering
                 include=['documents', 'metadatas', 'distances']
             )
             
-            if results['documents'][0]:
-                search_results = []
-                for i, (doc, metadata, distance) in enumerate(zip(
-                    results['documents'][0],
-                    results['metadatas'][0],
-                    results['distances'][0]
-                )):
-                    similarity = max(0.0, 1.0 - distance)
-                    
-                    search_results.append({
-                        'document': doc,
-                        'metadata': metadata,
-                        'similarity': similarity,
-                        'rank': i + 1
-                    })
-                
-                return search_results
+            if not raw_results['documents'][0]:
+                return []
             
-            return []
+            # Convert to structured results
+            search_results = []
+            for i, (doc, metadata, distance) in enumerate(zip(
+                raw_results['documents'][0],
+                raw_results['metadatas'][0], 
+                raw_results['distances'][0]
+            )):
+                similarity = max(0.0, 1.0 - distance)
+                
+                search_results.append({
+                    'document': doc,
+                    'metadata': metadata,
+                    'similarity': similarity,
+                    'rank': i + 1
+                })
+            
+            # Stage 3: Apply context-aware scoring
+            context_scored_results = self.context_aware_similarity_scoring(query_intent, search_results)
+            
+            # Stage 4: Re-rank by context-aware similarity
+            context_scored_results.sort(key=lambda x: x['context_aware_similarity'], reverse=True)
+            
+            # Return top_k results
+            return context_scored_results[:top_k]
             
         except Exception as e:
-            print(f"[ERROR] Semantic search failed: {e}")
+            print(f"[ERROR] Multi-stage semantic search failed: {e}")
             return []
 
 class WorkingRAGSystem:
@@ -272,36 +488,40 @@ Return only the SQL query."""
         # Semantic search
         rag_results = self.chroma_manager.semantic_search(user_query, top_k=5)
         
-        # Get best similarity and SQL
-        max_similarity = rag_results[0]['similarity'] if rag_results else 0.0
+        # Use context-aware similarity instead of raw similarity
+        max_similarity = rag_results[0]['context_aware_similarity'] if rag_results else 0.0
+        base_similarity = rag_results[0]['similarity'] if rag_results else 0.0
+        context_score = rag_results[0]['context_score'] if rag_results else 1.0
         rag_sql = ""
         
         if rag_results:
             best_doc = rag_results[0]['document']
             sql_patterns = [
-                r'SQL Query:\s*(SELECT[^;]+(?:;|$))',
-                r'SQL:\s*(SELECT[^;]+(?:;|$))',
-                r'(SELECT[^;]+(?:;|$))'
+                r'SQL Query:\s*(SELECT.*?)(?:\n\n|\nUsage|\nExpected|\nQuery Variations|$)',
+                r'SQL:\s*(SELECT.*?)(?:\n\n|\nUsage|\nExpected|\nQuery Variations|$)',
+                r'(SELECT.*?)(?:\n\n|\nUsage|\nExpected|\nQuery Variations|$)'
             ]
             
             for pattern in sql_patterns:
                 match = re.search(pattern, best_doc, re.IGNORECASE | re.DOTALL)
                 if match:
                     rag_sql = match.group(1).strip().rstrip(';')
+                    # Clean up any remaining explanatory text
+                    rag_sql = re.sub(r'\s+(Usage:|Expected Results:|Query Variations:).*$', '', rag_sql, flags=re.IGNORECASE | re.DOTALL)
                     break
         
-        # Enhanced similarity thresholds for better results
-        if max_similarity >= 0.45 and rag_sql:  # Slightly lower threshold
+        # Context-aware similarity thresholds
+        if max_similarity >= 0.40 and rag_sql:  # Higher threshold for context-aware
             final_sql = rag_sql
-            method = "rag_direct_high_similarity"
-        elif max_similarity >= 0.25:  # Medium threshold
+            method = "rag_direct_context_match"
+        elif max_similarity >= 0.25:  # Medium threshold with context consideration
             llm_sql = self.generate_sql(user_query, rag_results)
             final_sql = llm_sql if llm_sql else rag_sql
-            method = "llm_enhanced_medium_similarity"
+            method = "llm_enhanced_context_aware"
         else:
             llm_sql = self.generate_sql(user_query, rag_results)
             final_sql = llm_sql
-            method = "llm_generated_low_similarity"
+            method = "llm_generated_low_context"
         
         execution_time = (datetime.now() - start_time).total_seconds()
         
@@ -312,7 +532,10 @@ Return only the SQL query."""
             execution_time=execution_time,
             metadata={
                 'rag_results_count': len(rag_results),
-                'embedding_model': self.chroma_manager.get_model_info()
+                'embedding_model': self.chroma_manager.get_model_info(),
+                'base_similarity': base_similarity,
+                'context_score': context_score,
+                'query_intent': rag_results[0].get('query_intent', {}) if rag_results else {}
             }
         )
     
@@ -336,9 +559,12 @@ Return only the SQL query."""
         result = self.process_query(user_query)
         
         print(f"[METHOD] {result.method}")
-        print(f"[SIMILARITY] {result.similarity:.4f}")
+        print(f"[CONTEXT_SIMILARITY] {result.similarity:.4f}")
+        print(f"[BASE_SIMILARITY] {result.metadata.get('base_similarity', 0):.4f}")
+        print(f"[CONTEXT_SCORE] {result.metadata.get('context_score', 1.0):.2f}x")
+        print(f"[INTENT] {result.metadata.get('query_intent', {}).get('intent', 'unknown')}")
+        print(f"[GROUPING] {result.metadata.get('query_intent', {}).get('grouping_level', 'unknown')}")
         print(f"[TIME] {result.execution_time:.3f}s")
-        print(f"[MODEL] {result.metadata['embedding_model']['model_name']}")
         print(f"[SQL] {result.enhanced_sql}")
         
         if result.enhanced_sql:
@@ -406,7 +632,7 @@ def main():
         print("=" * 60)
         
         high_sim = [r for r in results if r['similarity'] >= 0.4]
-        print(f"High Similarity (≥0.4): {len(high_sim)}/{len(results)}")
+        print(f"High Similarity (>=0.4): {len(high_sim)}/{len(results)}")
         
         for r in results:
             status = "HIGH" if r['similarity'] >= 0.4 else "MEDIUM" if r['similarity'] >= 0.25 else "LOW"

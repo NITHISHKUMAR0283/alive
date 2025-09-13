@@ -1,1 +1,29 @@
-floatchat_indian_ocean_enhanced.db
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# ChromaDB collections (keep structure but ignore specific collection data)
+working_enhanced_chroma_db/*/
+!working_enhanced_chroma_db/.gitkeep
+
+# Large data files (users should download separately)
+*.db
+*.sqlite3
+
+# API keys (should be configured by users)
+config.py
+secrets.py
+
+# Temporary files
+*.tmp
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

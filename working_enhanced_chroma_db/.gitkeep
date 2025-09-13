@@ -1,0 +1,2 @@
+# This file ensures the working_enhanced_chroma_db directory is tracked by git
+# ChromaDB will create collections here when the system runs
